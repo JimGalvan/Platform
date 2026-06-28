@@ -94,21 +94,12 @@ public final class MigrationImport {
     private static int importCatalogs(Connection conn, Path dir, BufferedWriter exceptions)
         throws Exception {
         String sql = """
-            INSERT INTO catalogs (id, owner_id, slug, name, description, market, currency,
-                logo_object_key, phone, address, operating_hours,
-                created_at, updated_at, version)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            INSERT INTO catalogs (id, owner_id, slug, name, created_at, updated_at, version)
+            VALUES (?, ?, ?, ?, ?, ?, 0)
             ON CONFLICT (id) DO UPDATE SET
                 owner_id = EXCLUDED.owner_id,
                 slug = EXCLUDED.slug,
                 name = EXCLUDED.name,
-                description = EXCLUDED.description,
-                market = EXCLUDED.market,
-                currency = EXCLUDED.currency,
-                logo_object_key = EXCLUDED.logo_object_key,
-                phone = EXCLUDED.phone,
-                address = EXCLUDED.address,
-                operating_hours = EXCLUDED.operating_hours,
                 created_at = EXCLUDED.created_at,
                 updated_at = EXCLUDED.updated_at
             """;
@@ -117,15 +108,8 @@ public final class MigrationImport {
             ps.setObject(2, uuid(row, "owner_id"));
             ps.setString(3, text(row, "slug"));
             ps.setString(4, text(row, "name"));
-            setNullableString(ps, 5, row, "description");
-            ps.setString(6, text(row, "market"));
-            ps.setString(7, text(row, "currency"));
-            setNullableString(ps, 8, row, "logo_object_key");
-            setNullableString(ps, 9, row, "phone");
-            setNullableString(ps, 10, row, "address");
-            setNullableString(ps, 11, row, "operating_hours");
-            ps.setObject(12, timestamp(row, "created_at"));
-            ps.setObject(13, timestamp(row, "updated_at"));
+            ps.setObject(5, timestamp(row, "created_at"));
+            ps.setObject(6, timestamp(row, "updated_at"));
         });
     }
 
