@@ -1,0 +1,13 @@
+package com.platform.domain.enums.catalog;
+
+public enum CatalogError {
+    CATALOG_NOT_FOUND,
+    SECTION_NOT_FOUND,
+    ITEM_NOT_FOUND,
+    INVALID_MARKET,
+    INVALID_SECTION_ORDER,
+    INVALID_ITEM_SECTION,
+    INVALID_ITEM_ORDER,
+    INVALID_IMAGE,
+    CATALOG_SLUG_CONFLICT
+}
