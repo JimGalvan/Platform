@@ -8,6 +8,7 @@ import com.platform.catalog.domain.dto.UpdateCatalogRequest;
 import com.platform.catalog.domain.entities.CatalogEntity;
 import com.platform.catalog.domain.entities.CatalogItemEntity;
 import com.platform.catalog.domain.entities.CatalogProperty;
+import com.platform.catalog.domain.enums.CatalogPropertyType;
 import com.platform.catalog.repository.CatalogRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -127,7 +128,10 @@ public class CatalogCore {
             throw new IllegalArgumentException("Catalog property is required.");
         }
         String name = CatalogOperations.normalizeName(property.getName(), 80, "Catalog property name");
-        String type = CatalogOperations.normalizeName(property.getType(), 80, "Catalog property type");
+        CatalogPropertyType type = property.getType();
+        if (type == null) {
+            throw new IllegalArgumentException("Catalog property type is required.");
+        }
         String value = CatalogOperations.normalizeName(property.getValue(), 1000, "Catalog property value");
         return new CatalogProperty(name, type, value);
     }
@@ -143,7 +147,7 @@ public class CatalogCore {
     }
 
     static Result<CatalogEntity> requireOwned(CatalogRepository catalogRepository, UUID catalogId, UUID ownerId) {
-        return catalogRepository.findByIdAndOwner(catalogId, ownerId)
+        return catalogRepository.findByIdAndOwnerWithSections(catalogId, ownerId)
             .map(Result::ok)
             .orElseGet(() -> Result.notFound("CATALOG_NOT_FOUND", "Catalog not found."));
     }

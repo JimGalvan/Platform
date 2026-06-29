@@ -8,6 +8,7 @@ import com.platform.catalog.domain.dto.ImageUpload;
 import com.platform.catalog.domain.entities.CatalogEntity;
 import com.platform.catalog.domain.entities.CatalogItemEntity;
 import com.platform.catalog.domain.entities.CatalogProperty;
+import com.platform.catalog.domain.enums.CatalogPropertyType;
 import com.platform.catalog.domain.model.ValidatedImage;
 import com.platform.catalog.repository.CatalogRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -47,7 +48,7 @@ public class CatalogMediaCore {
         ValidatedImage image = imageResult.getValue();
         String objectKey = "catalogs/" + catalog.getId() + "/logo/original." + image.extension();
         objectStorage.put(objectKey, image.bytes(), image.contentType());
-        catalog.upsertProperty(new CatalogProperty("logoObjectKey", "MEDIA", objectKey));
+        catalog.upsertProperty(new CatalogProperty("logoObjectKey", CatalogPropertyType.MEDIA, objectKey));
         catalog.setUpdatedAt(Instant.now());
         return Result.ok(catalog);
     }

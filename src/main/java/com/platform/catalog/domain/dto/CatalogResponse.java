@@ -22,6 +22,7 @@ public record CatalogResponse(
 ) {
 
     public static CatalogResponse from(CatalogEntity catalog, ObjectStorage objectStorage) {
+
         return new CatalogResponse(
             catalog.getId(),
             catalog.getName(),

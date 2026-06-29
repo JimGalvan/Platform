@@ -23,6 +23,16 @@ public class CatalogRepository implements PanacheRepositoryBase<CatalogEntity, U
         return find("ownerId = ?1 order by updatedAt desc, name", ownerId).list();
     }
 
+    public Optional<CatalogEntity> findByIdAndOwnerWithSections(UUID catalogId, UUID ownerId) {
+        return find("""
+        select distinct c
+        from CatalogEntity c
+        left join fetch c.sections
+        where c.id = ?1 and c.ownerId = ?2
+        """, catalogId, ownerId)
+                .firstResultOptional();
+    }
+
     public boolean existsBySlug(String slug) {
         return count("slug", slug) > 0;
     }

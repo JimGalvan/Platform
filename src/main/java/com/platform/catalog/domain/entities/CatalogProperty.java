@@ -1,8 +1,12 @@
 package com.platform.catalog.domain.entities;
 
+import com.platform.catalog.domain.enums.CatalogPropertyType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Embeddable
@@ -13,10 +17,10 @@ public class CatalogProperty {
     @Column(nullable = false, length = 80)
     private String name;
 
-    @NotBlank
-    @Size(max = 80)
+    @NotNull
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 80)
-    private String type;
+    private CatalogPropertyType type;
 
     @NotBlank
     @Size(max = 1000)
@@ -26,7 +30,7 @@ public class CatalogProperty {
     public CatalogProperty() {
     }
 
-    public CatalogProperty(String name, String type, String value) {
+    public CatalogProperty(String name, CatalogPropertyType type, String value) {
         this.name = name;
         this.type = type;
         this.value = value;
@@ -40,11 +44,11 @@ public class CatalogProperty {
         this.name = name;
     }
 
-    public String getType() {
+    public CatalogPropertyType getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(CatalogPropertyType type) {
         this.type = type;
     }
 
