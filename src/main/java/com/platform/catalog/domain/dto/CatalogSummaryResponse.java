@@ -2,7 +2,6 @@ package com.platform.catalog.domain.dto;
 
 import com.platform.common.storage.ObjectStorage;
 import com.platform.catalog.domain.entities.CatalogEntity;
-import com.platform.catalog.domain.entities.CatalogProperty;
 
 import java.time.Instant;
 import java.util.List;
@@ -12,8 +11,7 @@ public record CatalogSummaryResponse(
     UUID id,
     String name,
     String slug,
-    String logoUrl,
-    List<CatalogProperty> properties,
+    List<CatalogPropertyResponse> properties,
     Instant updatedAt
 ) {
 
@@ -22,11 +20,9 @@ public record CatalogSummaryResponse(
             catalog.getId(),
             catalog.getName(),
             catalog.getSlug(),
-            catalog.property("logoObjectKey")
-                .map(CatalogProperty::getValue)
-                .map(objectStorage::presignedReadUrl)
-                .orElse(null),
-            catalog.getProperties(),
+            catalog.getProperties().stream()
+                .map(property -> CatalogPropertyResponse.from(property, objectStorage))
+                .toList(),
             catalog.getUpdatedAt()
         );
     }

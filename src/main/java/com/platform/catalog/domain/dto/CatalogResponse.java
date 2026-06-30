@@ -2,7 +2,6 @@ package com.platform.catalog.domain.dto;
 
 import com.platform.common.storage.ObjectStorage;
 import com.platform.catalog.domain.entities.CatalogEntity;
-import com.platform.catalog.domain.entities.CatalogProperty;
 
 import java.time.Instant;
 import java.util.Comparator;
@@ -13,8 +12,7 @@ public record CatalogResponse(
     UUID id,
     String name,
     String slug,
-    String logoUrl,
-    List<CatalogProperty> properties,
+    List<CatalogPropertyResponse> properties,
     List<CatalogSectionResponse> sections,
     List<CatalogItemResponse> items,
     Instant createdAt,
@@ -27,8 +25,9 @@ public record CatalogResponse(
             catalog.getId(),
             catalog.getName(),
             catalog.getSlug(),
-            mediaUrl(catalog.property("logoObjectKey").map(CatalogProperty::getValue).orElse(null), objectStorage),
-            catalog.getProperties(),
+            catalog.getProperties().stream()
+                .map(property -> CatalogPropertyResponse.from(property, objectStorage))
+                .toList(),
             catalog.getSections().stream()
                 .sorted(Comparator.comparingInt(section -> section.getPosition()))
                 .map(CatalogSectionResponse::from)
@@ -39,9 +38,5 @@ public record CatalogResponse(
             catalog.getCreatedAt(),
             catalog.getUpdatedAt()
         );
-    }
-
-    private static String mediaUrl(String objectKey, ObjectStorage objectStorage) {
-        return objectKey == null ? null : objectStorage.presignedReadUrl(objectKey);
     }
 }

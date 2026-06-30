@@ -20,7 +20,13 @@ public class CatalogRepository implements PanacheRepositoryBase<CatalogEntity, U
     }
 
     public List<CatalogEntity> findAllByOwner(UUID ownerId) {
-        return find("ownerId = ?1 order by updatedAt desc, name", ownerId).list();
+        return find("""
+        select distinct c
+        from CatalogEntity c
+        left join fetch c.properties
+        where c.ownerId = ?1
+        order by c.updatedAt desc, c.name
+        """, ownerId).list();
     }
 
     public Optional<CatalogEntity> findByIdAndOwnerWithSections(UUID catalogId, UUID ownerId) {

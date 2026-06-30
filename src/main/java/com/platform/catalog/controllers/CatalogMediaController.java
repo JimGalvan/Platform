@@ -9,8 +9,10 @@ import com.platform.catalog.domain.dto.CatalogItemResponse;
 import com.platform.catalog.domain.dto.CatalogResponse;
 import com.platform.catalog.domain.entities.CatalogEntity;
 import com.platform.catalog.domain.entities.CatalogItemEntity;
+import com.platform.catalog.domain.keys.CatalogMediaKind;
 import io.quarkus.security.Authenticated;
 import io.smallrye.common.annotation.RunOnVirtualThread;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -20,19 +22,20 @@ import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.UUID;
 
 @Path("/api/v1/catalogs/{catalogId}")
 @Produces(MediaType.APPLICATION_JSON)
 @Authenticated
 @RunOnVirtualThread
-public class MediaController extends BaseController {
+public class CatalogMediaController extends BaseController {
 
     private final CatalogMediaCore catalogMediaCore;
     private final ObjectStorage objectStorage;
     private final JsonWebToken jsonWebToken;
 
-    public MediaController(
+    public CatalogMediaController(
         CatalogMediaCore catalogMediaCore,
         ObjectStorage objectStorage,
         JsonWebToken jsonWebToken
@@ -43,15 +46,22 @@ public class MediaController extends BaseController {
     }
 
     @POST
-    @Path("/logo")
+    @Path("/media/{kind}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadLogo(
+    @Transactional
+    public Response uploadMedia(
         @PathParam("catalogId") UUID catalogId,
+        @PathParam("kind") String kind,
         @RestForm("file") FileUpload file
     ) throws IOException {
-        Result<CatalogEntity> result = catalogMediaCore.uploadLogo(
+        Optional<CatalogMediaKind> mediaKind = CatalogMediaKind.fromSlug(kind);
+        if (mediaKind.isEmpty()) {
+            return toResponse(Result.notFound("UNKNOWN_MEDIA_KIND", "Unknown media kind: " + kind));
+        }
+        Result<CatalogEntity> result = catalogMediaCore.uploadImage(
             catalogId,
             getAuthenticatedUserId(jsonWebToken),
+            mediaKind.get(),
             imageUpload(file)
         );
         if (!result.isSuccess()) {
@@ -63,6 +73,7 @@ public class MediaController extends BaseController {
     @POST
     @Path("/items/{itemId}/image")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Transactional
     public Response uploadItemImage(
         @PathParam("catalogId") UUID catalogId,
         @PathParam("itemId") UUID itemId,

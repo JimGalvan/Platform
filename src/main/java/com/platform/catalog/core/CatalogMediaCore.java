@@ -4,6 +4,7 @@ import com.platform.common.Result;
 import com.platform.catalog.common.exception.CatalogException;
 import com.platform.catalog.common.media.ImageValidator;
 import com.platform.common.storage.ObjectStorage;
+import com.platform.catalog.domain.keys.CatalogMediaKind;
 import com.platform.catalog.domain.dto.ImageUpload;
 import com.platform.catalog.domain.entities.CatalogEntity;
 import com.platform.catalog.domain.entities.CatalogItemEntity;
@@ -34,8 +35,14 @@ public class CatalogMediaCore {
         this.objectStorage = objectStorage;
     }
 
+    /** Validates and stores a catalog image for the given slot, recording its object key as a property. */
     @Transactional
-    public Result<CatalogEntity> uploadLogo(UUID catalogId, UUID ownerId, ImageUpload upload) {
+    public Result<CatalogEntity> uploadImage(
+        UUID catalogId,
+        UUID ownerId,
+        CatalogMediaKind kind,
+        ImageUpload upload
+    ) {
         Result<CatalogEntity> catalogResult = CatalogCore.requireOwned(catalogRepository, catalogId, ownerId);
         if (!catalogResult.isSuccess()) {
             return catalogResult;
@@ -46,9 +53,9 @@ public class CatalogMediaCore {
             return imageResult.asError();
         }
         ValidatedImage image = imageResult.getValue();
-        String objectKey = "catalogs/" + catalog.getId() + "/logo/original." + image.extension();
+        String objectKey = "catalogs/" + catalog.getId() + "/" + kind.folder() + "/original." + image.extension();
         objectStorage.put(objectKey, image.bytes(), image.contentType());
-        catalog.upsertProperty(new CatalogProperty("logoObjectKey", CatalogPropertyType.MEDIA, objectKey));
+        catalog.upsertProperty(new CatalogProperty(kind.propertyKey(), CatalogPropertyType.MEDIA, objectKey));
         catalog.setUpdatedAt(Instant.now());
         return Result.ok(catalog);
     }

@@ -106,7 +106,12 @@ public class CatalogCore {
         CatalogEntity catalog = catalogResult.getValue();
         try {
             catalog.setName(CatalogOperations.normalizeName(request.name(), 120, "Catalog name"));
-            catalog.setProperties(normalizeProperties(request.properties()));
+            // Only replace properties when the caller actually sends them; a null list
+            // means "leave as-is" so a name-only PATCH never wipes the logo and other
+            // properties (which are managed via their own endpoints, e.g. logo upload).
+            if (request.properties() != null) {
+                catalog.setProperties(normalizeProperties(request.properties()));
+            }
             catalog.setUpdatedAt(Instant.now());
         } catch (IllegalArgumentException exception) {
             return Result.unprocessableEntity("INVALID_CATALOG", exception.getMessage());

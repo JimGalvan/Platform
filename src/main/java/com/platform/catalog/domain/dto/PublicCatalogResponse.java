@@ -1,6 +1,7 @@
 package com.platform.catalog.domain.dto;
 
 import com.platform.common.storage.ObjectStorage;
+import com.platform.catalog.domain.keys.CatalogPropertyKey;
 import com.platform.catalog.domain.entities.CatalogSectionEntity;
 import com.platform.catalog.domain.entities.CatalogEntity;
 import com.platform.catalog.domain.entities.CatalogItemEntity;
@@ -15,6 +16,7 @@ public record PublicCatalogResponse(
     String name,
     String slug,
     String logoUrl,
+    String coverUrl,
     List<CatalogProperty> properties,
     List<PublicCatalogSectionResponse> sections,
     List<PublicCatalogItemResponse> items,
@@ -37,10 +39,8 @@ public record PublicCatalogResponse(
             catalog.getId(),
             catalog.getName(),
             catalog.getSlug(),
-            catalog.property("logoObjectKey")
-                .map(CatalogProperty::getValue)
-                .map(objectStorage::presignedReadUrl)
-                .orElse(null),
+            presignedProperty(catalog, CatalogPropertyKey.LOGO, objectStorage),
+            presignedProperty(catalog, CatalogPropertyKey.COVER, objectStorage),
             catalog.getProperties(),
             catalog.getSections().stream()
                 .sorted(Comparator.comparingInt(CatalogSectionEntity::getPosition))
@@ -55,6 +55,13 @@ public record PublicCatalogResponse(
                 .map(item -> PublicCatalogItemResponse.from(item, objectStorage))
                 .toList()
         );
+    }
+
+    private static String presignedProperty(CatalogEntity catalog, String key, ObjectStorage objectStorage) {
+        return catalog.property(key)
+            .map(CatalogProperty::getValue)
+            .map(objectStorage::presignedReadUrl)
+            .orElse(null);
     }
 
     private static UUID sectionId(CatalogItemEntity item) {

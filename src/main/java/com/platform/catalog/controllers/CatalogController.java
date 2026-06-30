@@ -58,6 +58,7 @@ public class CatalogController extends BaseController {
 
     @GET
     @Path("/{catalogId}")
+    @Transactional
     public Response get(@PathParam("catalogId") UUID catalogId) {
         Result<CatalogEntity> result = catalogCore.getOwned(catalogId, getAuthenticatedUserId(jsonWebToken));
         if (!result.isSuccess()) {
@@ -68,6 +69,7 @@ public class CatalogController extends BaseController {
 
     @GET
     @Path("/{catalogId}/preview-images")
+    @Transactional
     public Response previewImages(@PathParam("catalogId") UUID catalogId) {
         Result<List<String>> result = catalogCore.previewImageKeys(catalogId, getAuthenticatedUserId(jsonWebToken));
         if (!result.isSuccess()) {
