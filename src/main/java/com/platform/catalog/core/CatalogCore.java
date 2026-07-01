@@ -49,6 +49,7 @@ public class CatalogCore {
             catalog.setSlug(slugGenerator.generate(request.name()));
             catalog.setName(CatalogOperations.normalizeName(request.name(), 120, "Catalog name"));
             catalog.setProperties(normalizeProperties(request.properties()));
+            setBioProperty(catalog, request.description());
             catalog.setCreatedAt(now);
             catalog.setUpdatedAt(now);
         } catch (CatalogException exception) {
@@ -119,6 +120,7 @@ public class CatalogCore {
             if (request.properties() != null) {
                 catalog.setProperties(normalizeProperties(request.properties()));
             }
+            setBioProperty(catalog, request.description());
             catalog.setUpdatedAt(Instant.now());
         } catch (IllegalArgumentException exception) {
             return Result.unprocessableEntity("INVALID_CATALOG", exception.getMessage());
@@ -151,6 +153,14 @@ public class CatalogCore {
         }
         catalog.setUpdatedAt(Instant.now());
         return Result.ok(catalog);
+    }
+
+    private static void setBioProperty(CatalogEntity catalog, String description) {
+        String normalized = CatalogOperations.normalizeDescription(description);
+        catalog.getProperties().removeIf(property -> CatalogPropertyKey.BIO.equalsIgnoreCase(property.getName()));
+        if (normalized != null) {
+            catalog.getProperties().add(new CatalogProperty(CatalogPropertyKey.BIO, CatalogPropertyType.TEXT, normalized));
+        }
     }
 
     private static List<CatalogProperty> normalizeProperties(List<CatalogProperty> properties) {

@@ -2,6 +2,8 @@ package com.platform.catalog.domain.dto;
 
 import com.platform.common.storage.ObjectStorage;
 import com.platform.catalog.domain.entities.CatalogEntity;
+import com.platform.catalog.domain.entities.CatalogProperty;
+import com.platform.catalog.domain.keys.CatalogPropertyKey;
 
 import java.time.Instant;
 import java.util.Comparator;
@@ -12,6 +14,7 @@ public record CatalogResponse(
     UUID id,
     String name,
     String slug,
+    String description,
     List<CatalogPropertyResponse> properties,
     List<CatalogSectionResponse> sections,
     List<CatalogItemResponse> items,
@@ -25,6 +28,7 @@ public record CatalogResponse(
             catalog.getId(),
             catalog.getName(),
             catalog.getSlug(),
+            catalog.property(CatalogPropertyKey.BIO).map(CatalogProperty::getValue).orElse(null),
             catalog.getProperties().stream()
                 .map(property -> CatalogPropertyResponse.from(property, objectStorage))
                 .toList(),

@@ -9,6 +9,7 @@ import java.util.List;
 
 public record CreateCatalogRequest(
     @NotBlank @Size(max = 120) String name,
+    @Size(max = 1000) String description,
     List<@Valid CatalogProperty> properties
 ) {
 }

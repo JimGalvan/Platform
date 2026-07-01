@@ -13,6 +13,9 @@ public final class CatalogPropertyKey {
     /** Catalog cover/header image (wide banner), shown at the top of the menu. */
     public static final String COVER = "coverObjectKey";
 
+    /** Creator-facing public bio/description. */
+    public static final String BIO = "bio";
+
     /** Creator social links, stored as a JSON array of {@code {key, handle, visible}}. */
     public static final String SOCIAL_LINKS = "socialLinks";
 
