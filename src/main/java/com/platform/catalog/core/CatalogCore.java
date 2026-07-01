@@ -1,14 +1,18 @@
 package com.platform.catalog.core;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.platform.common.Result;
 import com.platform.catalog.common.exception.CatalogException;
 import com.platform.catalog.core.creation.UniqueCatalogSlugGenerator;
 import com.platform.catalog.domain.dto.CreateCatalogRequest;
+import com.platform.catalog.domain.dto.SocialLink;
 import com.platform.catalog.domain.dto.UpdateCatalogRequest;
 import com.platform.catalog.domain.entities.CatalogEntity;
 import com.platform.catalog.domain.entities.CatalogItemEntity;
 import com.platform.catalog.domain.entities.CatalogProperty;
 import com.platform.catalog.domain.enums.CatalogPropertyType;
+import com.platform.catalog.domain.keys.CatalogPropertyKey;
 import com.platform.catalog.repository.CatalogRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -23,13 +27,16 @@ public class CatalogCore {
 
     private final CatalogRepository catalogRepository;
     private final UniqueCatalogSlugGenerator slugGenerator;
+    private final ObjectMapper objectMapper;
 
     public CatalogCore(
         CatalogRepository catalogRepository,
-        UniqueCatalogSlugGenerator slugGenerator
+        UniqueCatalogSlugGenerator slugGenerator,
+        ObjectMapper objectMapper
     ) {
         this.catalogRepository = catalogRepository;
         this.slugGenerator = slugGenerator;
+        this.objectMapper = objectMapper;
     }
 
     @Transactional
@@ -116,6 +123,33 @@ public class CatalogCore {
         } catch (IllegalArgumentException exception) {
             return Result.unprocessableEntity("INVALID_CATALOG", exception.getMessage());
         }
+        return Result.ok(catalog);
+    }
+
+    /**
+     * Replaces the creator's social links (stored as a JSON array in the
+     * {@code socialLinks} property). Leaves every other property — logo, cover,
+     * details — untouched, so it is safe to call independently of a details PATCH.
+     */
+    @Transactional
+    public Result<CatalogEntity> updateSocials(UUID catalogId, UUID ownerId, List<SocialLink> socials) {
+        Result<CatalogEntity> catalogResult = requireOwned(catalogRepository, catalogId, ownerId);
+        if (!catalogResult.isSuccess()) {
+            return catalogResult;
+        }
+        CatalogEntity catalog = catalogResult.getValue();
+        List<SocialLink> clean = (socials == null ? List.<SocialLink>of() : socials).stream()
+            .filter(s -> s != null && s.key() != null && !s.key().isBlank()
+                && s.handle() != null && !s.handle().isBlank())
+            .map(s -> new SocialLink(s.key().trim(), s.handle().trim(), s.visible()))
+            .toList();
+        try {
+            catalog.upsertProperty(new CatalogProperty(
+                CatalogPropertyKey.SOCIAL_LINKS, CatalogPropertyType.JSON, objectMapper.writeValueAsString(clean)));
+        } catch (JsonProcessingException exception) {
+            return Result.unprocessableEntity("INVALID_SOCIALS", "Could not encode social links.");
+        }
+        catalog.setUpdatedAt(Instant.now());
         return Result.ok(catalog);
     }
 

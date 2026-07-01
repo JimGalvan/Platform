@@ -93,6 +93,20 @@ public class CatalogController extends BaseController {
         return toResponse(Result.ok(CatalogResponse.from(result.getValue(), objectStorage)));
     }
 
+    @PUT
+    @Path("/{catalogId}/socials")
+    @Transactional
+    public Response updateSocials(
+        @PathParam("catalogId") UUID catalogId,
+        List<SocialLink> socials
+    ) {
+        Result<CatalogEntity> result = catalogCore.updateSocials(catalogId, getAuthenticatedUserId(jsonWebToken), socials);
+        if (!result.isSuccess()) {
+            return toResponse(result);
+        }
+        return toResponse(Result.ok(CatalogResponse.from(result.getValue(), objectStorage)));
+    }
+
     @DELETE
     @Path("/{catalogId}")
     public Response delete(@PathParam("catalogId") UUID catalogId) {
