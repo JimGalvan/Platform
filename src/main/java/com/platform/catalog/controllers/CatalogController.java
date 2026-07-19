@@ -107,6 +107,20 @@ public class CatalogController extends BaseController {
         return toResponse(Result.ok(CatalogResponse.from(result.getValue(), objectStorage)));
     }
 
+    @PUT
+    @Path("/{catalogId}/accent")
+    @Transactional
+    public Response updateAccent(
+        @PathParam("catalogId") UUID catalogId,
+        @Valid UpdateAccentRequest request
+    ) {
+        Result<CatalogEntity> result = catalogCore.updateAccent(catalogId, getAuthenticatedUserId(jsonWebToken), request.accentColor());
+        if (!result.isSuccess()) {
+            return toResponse(result);
+        }
+        return toResponse(Result.ok(CatalogResponse.from(result.getValue(), objectStorage)));
+    }
+
     @DELETE
     @Path("/{catalogId}")
     public Response delete(@PathParam("catalogId") UUID catalogId) {

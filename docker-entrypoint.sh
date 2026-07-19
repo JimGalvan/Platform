@@ -4,7 +4,7 @@ set -e
 # Railway provides a single DATABASE_URL (postgresql://user:pass@host:port/db).
 # Quarkus's JDBC datasource needs a jdbc: URL plus separate credentials, so derive
 # them here into Quarkus's own env-var names. This runs only inside the container;
-# local dev uses the SQLite qa profile and never needs this conversion.
+# Gradle quarkusDev mirrors this conversion for local runs.
 if [ -n "$DATABASE_URL" ]; then
   no_proto="${DATABASE_URL#*://}"   # user:pass@host:port/db
   creds="${no_proto%%@*}"           # user:pass

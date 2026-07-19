@@ -155,6 +155,23 @@ public class CatalogCore {
         return Result.ok(catalog);
     }
 
+    /**
+     * Sets the brand accent color (stored as a TEXT {@code accentColor} property).
+     * Like {@link #updateSocials}, it touches only its own property.
+     */
+    @Transactional
+    public Result<CatalogEntity> updateAccent(UUID catalogId, UUID ownerId, String accentColor) {
+        Result<CatalogEntity> catalogResult = requireOwned(catalogRepository, catalogId, ownerId);
+        if (!catalogResult.isSuccess()) {
+            return catalogResult;
+        }
+        CatalogEntity catalog = catalogResult.getValue();
+        catalog.upsertProperty(new CatalogProperty(
+            CatalogPropertyKey.ACCENT_COLOR, CatalogPropertyType.TEXT, accentColor.toLowerCase()));
+        catalog.setUpdatedAt(Instant.now());
+        return Result.ok(catalog);
+    }
+
     private static void setBioProperty(CatalogEntity catalog, String description) {
         String normalized = CatalogOperations.normalizeDescription(description);
         catalog.getProperties().removeIf(property -> CatalogPropertyKey.BIO.equalsIgnoreCase(property.getName()));

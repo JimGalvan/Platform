@@ -19,6 +19,9 @@ public final class CatalogPropertyKey {
     /** Creator social links, stored as a JSON array of {@code {key, handle, visible}}. */
     public static final String SOCIAL_LINKS = "socialLinks";
 
+    /** Brand accent color as a {@code #rrggbb} hex string, themes the public menu. */
+    public static final String ACCENT_COLOR = "accentColor";
+
     private CatalogPropertyKey() {
     }
 }

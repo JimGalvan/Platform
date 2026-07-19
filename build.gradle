@@ -35,3 +35,78 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+def readLocalEnv = {
+    def envFile = file('.env')
+    if (!envFile.exists()) {
+        return [:]
+    }
+
+    envFile.readLines().collectEntries { rawLine ->
+        def line = rawLine.trim()
+        if (!line || line.startsWith('#')) {
+            return [:]
+        }
+
+        def separator = line.indexOf('=')
+        if (separator <= 0) {
+            return [:]
+        }
+
+        def key = line.substring(0, separator).trim()
+        def value = line.substring(separator + 1).trim()
+        if ((value.startsWith('"') && value.endsWith('"')) ||
+                (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.substring(1, value.length() - 1)
+        }
+
+        [(key): value]
+    }
+}
+
+def decodeUrlPart = { value ->
+    value == null ? null : java.net.URLDecoder.decode(value, java.nio.charset.StandardCharsets.UTF_8)
+}
+
+def quarkusDatasourceEnvFrom = { databaseUrl ->
+    if (!databaseUrl) {
+        return [:]
+    }
+
+    if (databaseUrl.startsWith('jdbc:')) {
+        return [QUARKUS_DATASOURCE_JDBC_URL: databaseUrl]
+    }
+
+    def uri = new java.net.URI(databaseUrl)
+    if (!(uri.scheme in ['postgres', 'postgresql'])) {
+        return [:]
+    }
+
+    def env = [
+            QUARKUS_DATASOURCE_DB_KIND   : 'postgresql',
+            QUARKUS_DATASOURCE_JDBC_DRIVER: 'org.postgresql.Driver',
+            QUARKUS_DATASOURCE_JDBC_URL   : "jdbc:postgresql://${uri.host}${uri.port > -1 ? ":${uri.port}" : ''}${uri.rawPath ?: ''}${uri.rawQuery ? "?${uri.rawQuery}" : ''}"
+    ]
+
+    if (uri.rawUserInfo) {
+        def pieces = uri.rawUserInfo.split(':', 2)
+        env.QUARKUS_DATASOURCE_USERNAME = decodeUrlPart(pieces[0])
+        if (pieces.length > 1) {
+            env.QUARKUS_DATASOURCE_PASSWORD = decodeUrlPart(pieces[1])
+        }
+    }
+
+    env
+}
+
+tasks.named('quarkusDev') {
+    def localEnv = readLocalEnv()
+    if (!localEnv.isEmpty()) {
+        environmentVariables.putAll(localEnv)
+
+        quarkusDatasourceEnvFrom(localEnv.DATABASE_URL).each { key, value ->
+            if (!System.getenv(key) && !localEnv.containsKey(key)) {
+                environmentVariables.put(key, value)
+            }
+        }
+    }
+}
